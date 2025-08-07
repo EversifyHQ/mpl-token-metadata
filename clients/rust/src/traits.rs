@@ -3,16 +3,16 @@
 use std::io::{Error, ErrorKind};
 
 use borsh::BorshDeserialize;
-use solana_program::pubkey::Pubkey;
+use solana_sdk::pubkey::Pubkey;
 
 use crate::{
     accounts::{
-        CollectionAuthorityRecord, MasterEdition, Metadata, MetadataDelegateRecord, TokenRecord,
+        CollectionAuthorityRecord, MasterEditionV2, Metadata, MetadataDelegateRecord, TokenRecord,
     },
-    errors::MplTokenMetadataError,
+    errors::TokenMetadataError,
     generated::{
+        types::CollectionDetailsToggle,
         types::{CollectionToggle, RuleSetToggle, UsesToggle},
-        {instructions::UpdateV1InstructionArgs, types::CollectionDetailsToggle},
     },
     types::{
         Collection, CollectionDetails, Data, Key, ProgrammableConfig, TokenDelegateRole,
@@ -29,9 +29,9 @@ macro_rules! safe_deserialize {
     };
     ( ($name:tt, $key:tt) ) => {
         impl $name {
-            pub fn safe_deserialize(data: &[u8]) -> Result<Self, borsh::maybestd::io::Error> {
+            pub fn safe_deserialize(data: &[u8]) -> Result<Self, borsh::io::Error> {
                 if data.is_empty() || data[0] != Key::$key as u8 {
-                    return Err(borsh::maybestd::io::Error::new(
+                    return Err(borsh::io::Error::new(
                         ErrorKind::Other,
                         "DataTypeMismatch",
                     ));
@@ -48,41 +48,39 @@ macro_rules! safe_deserialize {
 
 safe_deserialize!(
     (CollectionAuthorityRecord, CollectionAuthorityRecord),
-    (MasterEdition, MasterEditionV2),
+    (MasterEditionV2, MasterEditionV2),
     (MetadataDelegateRecord, MetadataDelegate)
 );
 
-// UpdateV1InstructionArgs
+// UpdateInstructionArgs
 
-impl Default for UpdateV1InstructionArgs {
+use crate::generated::instructions::UpdateInstructionArgs;
+
+impl Default for UpdateInstructionArgs {
     fn default() -> Self {
         Self {
-            new_update_authority: None,
-            data: None,
-            primary_sale_happened: None,
-            is_mutable: None,
-            collection: CollectionToggle::None,
-            collection_details: CollectionDetailsToggle::None,
-            uses: UsesToggle::None,
-            rule_set: RuleSetToggle::None,
-            authorization_data: None,
+            update_args: UpdateArgs::AsUpdateAuthorityV2 {
+                new_update_authority: None,
+                data: None,
+                primary_sale_happened: None,
+                is_mutable: None,
+                collection: CollectionToggle::None,
+                collection_details: CollectionDetailsToggle::None,
+                uses: UsesToggle::None,
+                rule_set: RuleSetToggle::None,
+                token_standard: None,
+                authorization_data: None,
+            },
         }
     }
 }
 
-// Token Standard
-
-impl Copy for TokenStandard {}
-
 // Metadata
 
 impl Metadata {
-    pub fn safe_deserialize(data: &[u8]) -> Result<Self, borsh::maybestd::io::Error> {
+    pub fn safe_deserialize(data: &[u8]) -> Result<Self, borsh::io::Error> {
         if data.is_empty() || data[0] != Key::MetadataV1 as u8 {
-            return Err(borsh::maybestd::io::Error::new(
-                ErrorKind::Other,
-                "DataTypeMismatch",
-            ));
+            return Err(borsh::io::Error::new(ErrorKind::Other, "DataTypeMismatch"));
         }
         // mutable "pointer" to the account data
         let mut data = data;
@@ -91,7 +89,7 @@ impl Metadata {
         Ok(result)
     }
 
-    fn deserialize_unchecked(buf: &mut &[u8]) -> Result<Self, borsh::maybestd::io::Error> {
+    fn deserialize_unchecked(buf: &mut &[u8]) -> Result<Self, borsh::io::Error> {
         // Metadata corruption shouldn't appear until after edition_nonce.
         let key: Key = BorshDeserialize::deserialize(buf)?;
         let update_authority: Pubkey = BorshDeserialize::deserialize(buf)?;
@@ -102,22 +100,19 @@ impl Metadata {
         let edition_nonce: Option<u8> = BorshDeserialize::deserialize(buf)?;
 
         // V1.2
-        let token_standard_res: Result<Option<TokenStandard>, borsh::maybestd::io::Error> =
+        let token_standard_res: Result<Option<TokenStandard>, borsh::io::Error> =
             BorshDeserialize::deserialize(buf);
-        let collection_res: Result<Option<Collection>, borsh::maybestd::io::Error> =
+        let collection_res: Result<Option<Collection>, borsh::io::Error> =
             BorshDeserialize::deserialize(buf);
-        let uses_res: Result<Option<Uses>, borsh::maybestd::io::Error> =
-            BorshDeserialize::deserialize(buf);
+        let uses_res: Result<Option<Uses>, borsh::io::Error> = BorshDeserialize::deserialize(buf);
 
         // V1.3
-        let collection_details_res: Result<Option<CollectionDetails>, borsh::maybestd::io::Error> =
+        let collection_details_res: Result<Option<CollectionDetails>, borsh::io::Error> =
             BorshDeserialize::deserialize(buf);
 
         // pNFT - Programmable Config
-        let programmable_config_res: Result<
-            Option<ProgrammableConfig>,
-            borsh::maybestd::io::Error,
-        > = BorshDeserialize::deserialize(buf);
+        let programmable_config_res: Result<Option<ProgrammableConfig>, borsh::io::Error> =
+            BorshDeserialize::deserialize(buf);
 
         // We can have accidentally valid, but corrupted data, particularly on the Collection struct,
         // so to increase probability of catching errors. If any of these deserializations fail, set
@@ -179,7 +174,7 @@ impl TokenRecord {
         {
             return Err(Error::new(
                 ErrorKind::InvalidData,
-                MplTokenMetadataError::DataTypeMismatch,
+                TokenMetadataError::DataTypeMismatch,
             ));
         }
         // mutable "pointer" to the account data
@@ -296,7 +291,3 @@ impl UpdateArgs {
         }
     }
 }
-
-// Key
-
-impl Copy for Key {}

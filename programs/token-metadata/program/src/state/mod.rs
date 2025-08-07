@@ -19,7 +19,7 @@ pub(crate) mod uses;
 use std::io::ErrorKind;
 
 pub use asset_data::*;
-use borsh::{maybestd::io::Error as BorshError, BorshDeserialize, BorshSerialize};
+use borsh::{io::Error as BorshError, BorshDeserialize, BorshSerialize};
 pub use collection::*;
 pub use creator::*;
 pub use data::*;

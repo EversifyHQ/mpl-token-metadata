@@ -3,7 +3,7 @@ pub mod hooked;
 mod traits;
 pub mod utils;
 
-pub use generated::programs::MPL_TOKEN_METADATA_ID as ID;
+pub use generated::programs::TOKEN_METADATA_ID as ID;
 pub use generated::*;
 
 /// Maximum number of characters in a metadata name.

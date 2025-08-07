@@ -7,9 +7,9 @@ pub use dirty_clone::*;
 use spl_token_2022::extension::{BaseState, StateWithExtensions};
 pub use token_manager::*;
 
-use solana_program::{program_error::ProgramError, pubkey::Pubkey};
 use solana_program_test::{ProgramTest, ProgramTestContext};
 use solana_sdk::{account::Account, program_pack::Pack};
+use solana_sdk::{program_error::ProgramError, pubkey::Pubkey};
 
 pub fn program_test() -> ProgramTest {
     let mut program_test = ProgramTest::new("token_metadata", mpl_token_metadata::ID, None);

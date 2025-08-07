@@ -3,8 +3,8 @@ mod setup;
 pub use setup::*;
 
 use mpl_token_metadata::types::TokenStandard;
-use solana_program::pubkey::Pubkey;
 use solana_program_test::*;
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signer};
 use spl_token_2022::extension::ExtensionType;
 use spl_token_2022::state::Account;

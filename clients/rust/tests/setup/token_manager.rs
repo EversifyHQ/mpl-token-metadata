@@ -1,17 +1,17 @@
 use mpl_token_metadata::accounts::Metadata;
-use solana_program::{
+use solana_program_test::{BanksClientError, ProgramTestContext};
+use solana_sdk::{
     native_token::LAMPORTS_PER_SOL, program_pack::Pack, pubkey::Pubkey, system_instruction,
 };
-use solana_program_test::{BanksClientError, ProgramTestContext};
 use solana_sdk::{
     signature::{Keypair, Signer},
     transaction::Transaction,
 };
 use spl_token_2022::{
     extension::{
-        default_account_state::instruction::initialize_default_account_state,
+        ExtensionType, default_account_state::instruction::initialize_default_account_state,
         interest_bearing_mint, metadata_pointer,
-        transfer_fee::instruction::initialize_transfer_fee_config, transfer_hook, ExtensionType,
+        transfer_fee::instruction::initialize_transfer_fee_config, transfer_hook,
     },
     instruction::{
         initialize_mint_close_authority, initialize_non_transferable_mint,

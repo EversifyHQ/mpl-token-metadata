@@ -3,8 +3,8 @@ use mpl_token_metadata::{
     instructions::{CreateV1Builder, MintV1Builder},
     types::{PrintSupply, TokenStandard},
 };
-use solana_program::pubkey::Pubkey;
 use solana_program_test::{BanksClientError, ProgramTestContext};
+use solana_sdk::pubkey::Pubkey;
 use solana_sdk::{
     signature::{Keypair, Signer},
     transaction::Transaction,
